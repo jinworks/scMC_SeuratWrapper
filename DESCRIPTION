@@ -1,0 +1,37 @@
+Package: scMC
+Type: Package
+Title: Integrating and comparing multiple single cell genomic datasets
+Version: 0.5.0
+Author: Lihua Zhang
+Maintainer: Lihua Zhang <lihuaz1@uci.edu>
+Description: R tookit for integrating and comparing multiple single cell genomic datasets across different experiments.
+Depends: R (>= 3.5.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+    future,
+    future.apply,
+    pbapply,
+    irlba,
+    Matrix,
+    stats,
+    fastcluster,
+    RSpectra,
+    ggplot2,
+    grDevices,
+    patchwork,
+    purrr,
+    Seurat (>= 3.2.1),
+    rlang,
+    scales,
+    grid,
+    ggpubr,
+    RColorBrewer,
+    dplyr,
+    plyr,
+    clusterProfiler
+Suggests:
+    rmarkdown, knitr, roxygen2
+RoxygenNote: 7.1.1
+VignetteBuilder: knitr
