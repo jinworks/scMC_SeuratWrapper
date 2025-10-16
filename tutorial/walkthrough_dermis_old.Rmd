@@ -1,0 +1,98 @@
+
+---
+title: "Walkthrough -- Integrative analysis of cells from control and Hedgehog (Hh) activation conditions during skin wound healing"
+author: "Lihua Zhang"
+output: html_document
+mainfont: Arial
+vignette: >
+  %\VignetteIndexEntry{Integrating and comparing multiple single cell genomic datasets using scMC}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  root.dir = './'
+)
+```
+
+We showcase scMC’s capability of detecting context-shared and -specific biological signals by applying it to two mouse skin scRNA-seq datasets containing cells from control and Hedgehog (Hh) activation conditions during skin wound healing. 
+
+
+## Load the required libraries
+```{r message=FALSE,warning=FALSE}
+library(scMC)
+library(cowplot)
+```
+
+## Load data
+scMC takes a list of multiple digital data matrices as input. Features should be in rows and cells in columns. Rownames and colnames should be included. 
+
+The scRNA datasets we demonstrated here, including two count data matrices for the control and Hh activation conditions, can be downloaded via this shared Google Drive [link](https://drive.google.com/file/d/182EMDA0x5fr2nV7MbC4SDISSjFBS1E0p/view?usp=sharing).
+
+```{r}
+load("/Users/suoqinjin/Downloads/scMC/tutorial/data_dermis.rda")
+data_list = data_dermis # a list of count data matrix, one per dataset
+```
+
+## Create a scMC object
+```{r}
+scMC <- create_scMC(raw.data = data_list)
+```
+
+## Preprocess data
+```{r}
+scMC <- preprocessing(scMC, add.names = c("Control","Hh activation"), cell.prefix = TRUE)
+```
+
+## Identify cell clusters for each dataset
+```{r, warning=FALSE}
+scMC <- identifyNeighbors(scMC, mode = "separate")
+scMC <- identifyClusters(scMC, mode = "separate")
+```
+
+## Detect confident cells in each cell cluster 
+
+```{r,message=FALSE,warning=FALSE}
+scMC <- identifyConfidentCells(scMC)
+```
+
+## Identify marker genes associated with the putative cell clusters in each dataset
+```{r}
+scMC <- identifyMarkers(scMC, mode = "separate")
+```
+
+## Learn technical variation between any two datasets
+```{r}
+structured_mat <- learnTechnicalVariation(scMC)
+```
+
+## Learn a shared embedding of cells across all datasets after removing technical variation
+
+```{r}
+scMC <- integrateData(scMC, structured_mat)
+```
+
+## Perform an integrated analysis
+Run the standard workflow for clustering
+```{r,message=FALSE,warning=FALSE}
+scMC <- identifyNeighbors(scMC, mode = "integrated")
+scMC <- identifyClusters(scMC, mode = "integrated", resolution = 0.04)
+scMC <- runUMAP(scMC, reducedDims = "integrated")
+```
+
+## Visualize cells onto the low-dimensional space
+```{r, fig.width=8,fig.height = 3.5,  fig.wide = TRUE, fig.align = "center"}
+gg1 <- cellVisualization(scMC, color.by = "sample.id", colors.ggplot = T)
+gg2 <- cellVisualization(scMC, color.by = "Integrated clusters")
+cowplot::plot_grid(gg1, gg2)
+```
+
+## Overlay the expression of features onto the low-dimensional space
+We can overlay the expression of features onto the low-dimensional space. Here we overlay the expression levels of fibroblasts pan-markers (Pdgfra and Lox) and Hh-active fibroblast markers (Ptch1 and Gil1) onto the UMAP space. 
+```{r, fig.width=9, fig.height=2.5,  fig.wide = TRUE, fig.align = "center"}
+featureVisualization(scMC, feature.use = c('Pdgfra','Lox','Ptch1','Gli1'),  nCol = 4, cell.size = 0.1, show.legend = F, show.legend.combined = F)
+```
+
